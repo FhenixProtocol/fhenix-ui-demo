@@ -1,0 +1,7 @@
+
+{
+  "ERC20_CONTRACT": "0xbd4c620A0E489283Ea442DDD22ce18D8cFB14ed3",
+  "RPC_DEFAULT_ENDPOINT": "https://fhenode.fhenix.io/evm",
+  "ENCRYPTION_SERVICE": "https://fhenode.fhenix.io",
+  "CHAIN_ID": 9000
+}
