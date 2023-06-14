@@ -8,9 +8,6 @@
 </template>
 
 <style>
-  html {
-  }
-
   body {
     background-color: #222222;
     overflow: hidden; 

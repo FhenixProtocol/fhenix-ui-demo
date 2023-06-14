@@ -73,7 +73,7 @@ export default {
       return "";
     },
     infoBoxAnimatedStyle() {
-      let bgColor = "rgba(100, 100, 100, 0.6)";
+      let bgColor = "rgba(10, 10, 10, 0.4)";
       let infoHeight = "35px";
 
       if (this.info !== "") {
@@ -286,7 +286,7 @@ export default {
     border-radius: 0px 0px 15px 15px;    
     background-color: var(--bg-color);
     backdrop-filter: blur(7px);
-    z-index: -1;
+    z-index: 1;
     /* line-height: 45px; */
     padding-top: 12px;
     padding-left: 10px;
@@ -319,7 +319,7 @@ export default {
     </v-btn>
 
     <template v-if="account != ''">
-      <v-text-field density="compact" rounded variant="solo" label="Contract Address" style="width: 350px;" v-model="contractAddress" >
+      <v-text-field density="compact" rounded variant="solo" label="Contract Address" style="width: 350px; z-index: 2" v-model="contractAddress" >
         <template v-slot:prepend-inner>
           <div style="height: 24px; width: 24px"><img src="~/assets/smart_contract.png" /></div>
         </template>
