@@ -40,7 +40,29 @@ export default {
       activeContract: null,
       loadingContract: false,
       minting: false,
-      info: ""
+      info: "", 
+      showSend: false,
+      transferring: false,
+      amountRules: [
+        value => {
+          if (value) return true
+
+          return 'Amount is requred.'
+        },
+        value => {
+          if (value > 0) return true
+
+          return 'Amount must be greater than 0.'
+        },
+      ],
+      recipientRules: [
+        value => {
+          if (value) return true
+
+          return 'Recipient is requred.'
+        }
+      ],      
+
     }
   }, 
   computed: {
@@ -49,6 +71,26 @@ export default {
         return this.account.slice(0, 9) + '…' + this.account.slice(this.account.length - 6);
       }
       return "";
+    },
+    infoBoxAnimatedStyle() {
+      let bgColor = "rgba(100, 100, 100, 0.6)";
+      let infoHeight = "35px";
+
+      if (this.info !== "") {
+        infoHeight = "60px";
+        if (this.info.indexOf("Error:") !== -1) {
+          bgColor = "rgba(200, 100, 100, 0.6)";
+        }        
+      }
+      return { "--info-height" : infoHeight, "--bg-color": bgColor };
+    },
+    showProgress() {
+      if (this.info === "") {
+        return false
+      } else if (this.info.indexOf("Error:") !== -1) {
+        return false;
+      }
+      return true;
     }
   },
   methods: {
@@ -79,8 +121,16 @@ export default {
             ] 
           }); 
         }
-        web3Provider = new ethers.providers.Web3Provider(window.ethereum)
+        web3Provider = new ethers.providers.Web3Provider(this.metamask)
         web3Signer = await web3Provider.getSigner();
+
+        this.metamask.on('accountsChanged', (accounts: any) => {
+          console.log("accountsChanged");
+          this.account = accounts[0];
+          this.getTokenBalance();
+        }); 
+
+
         window.localStorage.setItem('connectedBefore', '1')
       }
     },
@@ -109,17 +159,18 @@ export default {
           
           tx.wait().then((receipt) => {
             this.minting = false;
-            console.log("Transfer Successful!")
+            console.log("Mint Successful!")
             console.log(receipt);
             this.info = "";
           }).catch((err) => {
             this.minting = false;
             console.log("handleClick Error: ", err)
-            console.log("Transfer Failed!");
+            console.log("Mint Failed!");
             this.info = "";
           });
         } catch (err) {
           this.minting = false;
+          this.info = "Error: Mint failed";
           console.log(err);
         }
       }
@@ -134,13 +185,13 @@ export default {
       let balance = -1;
       try {
         this.info = "Querying balance from contract..."
-        console.log("1111")     
         let encBalance = await this.activeContract.balanceOf();
-        console.log("2222");
         this.info = "Decrypting balance..."
         balance = await this.decrypt(encBalance.slice(2));
         this.info = ""
       } catch (err) {
+        this.info = "Error: Cannot read balance (does account exist?)";
+        console.error("Balance error");
         console.error(err);
       }
       this.loadingContract = false;
@@ -158,11 +209,52 @@ export default {
       this.balance = await this.getTokenBalance();
       console.log("My Balance", this.balance);
       this.loadingContract = false;
-      this.info = "";      
-    }
+    },
+
+    async sendTokens() {
+      let recipient = this.$refs.recipient.value;
+      let amount = this.$refs.amount.value;
+      
+      if (amount <= 0 || recipient === "") {
+        return;
+      }
+      
+      if (this.activeContract !== null) {
+        try {
+          this.showSend = false;
+          this.transferring = true;  
+          this.info = "Token Transfer; Encrypting amount...";
+          console.log("Encrypting amount...");
+          let mintAmount = await this.encrypt(amount);
+          const encryptedAmount = this.hexToBytes(mintAmount);
+          this.info = "Token Transfer; Sending transaction...";
+          let tx = await this.activeContract.transfer(recipient, encryptedAmount, { gasLimit: 10000000000 })
+          console.log(tx);
+
+          this.info = "Token Transfer; Waiting for confirmation...";
+          
+          tx.wait().then((receipt) => {
+            this.transferring = false;
+            console.log("Transfer Successful!");
+            console.log(receipt);
+            this.info = "";
+            this.getTokenBalance();
+          }).catch((err) => {
+            this.transferring = false;
+            console.log("handleClick Error: ", err)
+            console.log("Transfer Failed!");
+            this.info = "Transfer Failed!";
+          });
+
+        } catch (err) {
+          this.transferring = false;
+          this.info = "Error: Transfer failed!";
+        }
+      }
+    }    
+  },
 
 
-  }
 }
 </script>
 
@@ -189,16 +281,20 @@ export default {
   .info-box {
     position: relative;
     width: 300px; 
-    height: 40px; 
-    background-color: gray; 
+    height: var(--info-height); 
     margin-top: -40px; 
     border-radius: 0px 0px 15px 15px;    
-    background-color: rgba(100, 100, 100, 0.6);
+    background-color: var(--bg-color);
     backdrop-filter: blur(7px);
     z-index: -1;
-    line-height: 45px;
+    /* line-height: 45px; */
+    padding-top: 12px;
     padding-left: 10px;
-    font-size: 12px
+    font-size: 12px;
+    transition-property: height;
+    transition-timing-function: cubic-bezier(0.47, 1.64, 0.41, 0.8);
+    transition-duration: 0.3s;
+
   }
 
 </style>
@@ -223,7 +319,6 @@ export default {
     </v-btn>
 
     <template v-if="account != ''">
-      <div style="margin-bottom: -10px;">balance: {{  balance !== -1 ? balance : "unknown"  }}</div>
       <v-text-field density="compact" rounded variant="solo" label="Contract Address" style="width: 350px;" v-model="contractAddress" >
         <template v-slot:prepend-inner>
           <div style="height: 24px; width: 24px"><img src="~/assets/smart_contract.png" /></div>
@@ -232,9 +327,12 @@ export default {
           <v-btn density="compact" style="font-size: 12px" color="#FC4A1A" rounded @click="loadContract">{{ loadingContract ? "Wait..." : "Load"}}</v-btn>
         </template>
       </v-text-field>
-      <div class="info-box">
-        {{ info }}
-        <div v-if="info !== ''" style="position: absolute; left: 15px; bottom: 0px; width: calc(100% - 30px); height: 3px">
+      <div class="info-box" :style="infoBoxAnimatedStyle" >
+        <div>
+          <div style="margin-bottom: 0px;">balance: {{  balance !== -1 ? balance : "unknown"  }}</div>
+          {{ info }}
+        </div>
+        <div v-if="showProgress" style="position: absolute; left: 15px; bottom: 0px; width: calc(100% - 30px); height: 3px">
           <v-progress-linear style="width: 100%; height: 3px"
           indeterminate
           color="orange-darken-2"
@@ -243,12 +341,69 @@ export default {
         </div>
 
       </div>
-      <v-btn class="btn" color="#FC4A1A" rounded @click="mintToken(123)" :disabled="activeContract === null || loadingContract || minting">
-        <template v-slot:prepend>
-          <div style="height: 24px; width: 24px"><img src="~/assets/metamask.logo.svg" /></div>
-        </template>
-        Mint 123 Tokens
-      </v-btn>      
+
+      <div style="display: flex; gap: 10px">
+        <v-btn class="btn" color="#FC4A1A" rounded @click="showSend = true" :disabled="activeContract === null || loadingContract || minting || transferring" style="margin-top: 10px">
+          Transfer
+        </v-btn>      
+
+        <v-btn class="btn" color="#FC4A1A" rounded @click="mintToken(123)" :disabled="activeContract === null || loadingContract || minting || transferring" style="margin-top: 10px">
+          Mint
+        </v-btn>      
+      </div>
+      <div v-if="activeContract === null" style="font-size: 12px; margin-top: -5px">Please load contract to interact with it</div>
     </template>
+
+    <v-dialog v-model="showSend" width="400" persistent>
+      <v-card density="compact">
+        <v-card-title>
+          <span class="text-h6">Token Transfer</span>
+        </v-card-title>
+        <v-card-text>
+          <v-container fluid>
+            <v-row>
+              <v-col
+                cols="12"
+                sm="12"
+              >
+                <v-text-field
+                  label="Send To"
+                  required
+                  density="compact"
+                  ref="recipient"
+                  :rules="recipientRules"
+                ></v-text-field>
+                <v-text-field
+                  label="Amount"
+                  required
+                  density="compact"
+                  type="number"
+                  ref="amount"
+                  :rules="amountRules"                  
+                ></v-text-field>
+              </v-col>
+            </v-row>
+          </v-container>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn
+            color="blue-darken-1"
+            variant="text"
+            @click="showSend = false"
+          >
+            Close
+          </v-btn>
+          <v-btn
+            color="blue-darken-1"
+            variant="text"
+            @click="sendTokens()"
+          >
+            Send
+          </v-btn>
+        </v-card-actions>
+
+      </v-card>
+    </v-dialog>     
   </div>
 </template>
