@@ -7,6 +7,11 @@
   </v-app>
 </template>
 
+<style>
+  body {
+    background-color: #222222;
+  }
+</style>
 <style scoped>
   .main {
     display: flex; 
