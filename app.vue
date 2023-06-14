@@ -8,8 +8,12 @@
 </template>
 
 <style>
+  html {
+  }
+
   body {
     background-color: #222222;
+    overflow: hidden; 
   }
 </style>
 <style scoped>
@@ -17,7 +21,6 @@
     display: flex; 
     flex-direction: column; 
     align-items: center;
-    padding: 10px;
     gap: 10px;
     background: url('~/assets/bg.png') no-repeat center bottom;
     background-size: contain;
