@@ -124,10 +124,10 @@ export default {
         web3Provider = new ethers.providers.Web3Provider(this.metamask)
         web3Signer = await web3Provider.getSigner();
 
-        this.metamask.on('accountsChanged', (accounts: any) => {
+        this.metamask.on('accountsChanged', async (accounts: any) => {
           console.log("accountsChanged");
           this.account = accounts[0];
-          this.getTokenBalance();
+          this.balance = await this.getTokenBalance();
         }); 
 
 
@@ -157,16 +157,16 @@ export default {
 
           this.info = "Minting; Waiting for confirmation...";
           
-          tx.wait().then((receipt) => {
+          tx.wait().then(async (receipt) => {
             this.minting = false;
             console.log("Mint Successful!")
             console.log(receipt);
+            this.balance = await this.getTokenBalance();
             this.info = "";
           }).catch((err) => {
             this.minting = false;
             console.log("handleClick Error: ", err)
-            console.log("Mint Failed!");
-            this.info = "";
+            this.info = "Error: Mint Failed!";
           });
         } catch (err) {
           this.minting = false;
@@ -233,12 +233,12 @@ export default {
 
           this.info = "Token Transfer; Waiting for confirmation...";
           
-          tx.wait().then((receipt) => {
+          tx.wait().then(async (receipt) => {
             this.transferring = false;
             console.log("Transfer Successful!");
             console.log(receipt);
             this.info = "";
-            this.getTokenBalance();
+            this.balance = await this.getTokenBalance();
           }).catch((err) => {
             this.transferring = false;
             console.log("handleClick Error: ", err)
