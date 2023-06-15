@@ -186,6 +186,8 @@ export default {
       try {
         this.info = "Querying balance from contract..."
         let encBalance = await this.activeContract.balanceOf();
+        console.log(typeof encBalance);
+        console.log(encBalance);
         this.info = "Decrypting balance..."
         balance = await this.decrypt(encBalance.slice(2));
         this.info = ""
@@ -251,7 +253,7 @@ export default {
           this.info = "Error: Transfer failed!";
         }
       }
-    }    
+    },
   },
 
 
@@ -352,6 +354,11 @@ export default {
         </v-btn>      
       </div>
       <div v-if="activeContract === null" style="font-size: 12px; margin-top: -5px">Please load contract to interact with it</div>
+      <div>
+        <v-btn class="btn" color="#FC4A1A" rounded @click="getCoins(account)" :disabled="account === '' || usingFaucet" style="margin-top: 10px">
+          {{ usingFaucet ? "Please wait..." : "Get Coins from faucet" }} 
+        </v-btn>      
+      </div>
     </template>
 
     <v-dialog v-model="showSend" width="400" persistent>

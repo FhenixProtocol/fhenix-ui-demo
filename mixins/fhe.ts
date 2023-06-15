@@ -3,6 +3,7 @@ import appConfig from '../config/appConfig.json'
 var mixin = {
   data() {
     return {
+      usingFaucet: false,
     }
   },
   methods: {
@@ -31,6 +32,23 @@ var mixin = {
       }
 
       return Number(encodedData.data.decrypted)
+    },
+
+    async getCoins(address: string): Promise<string> {
+      this.usingFaucet = true;
+      try {
+        const result = await this.$axios.get(`${appConfig.ENCRYPTION_SERVICE}/faucet/faucet?address=${address}`, {
+          headers: { "content-type": "appliaction/json" }
+        });
+  
+        if (result.status !== 200) {
+          throw new Error(`Failed to get coins from faucet`)
+        }
+      } catch (err) {
+        console.log(err);
+      }
+      this.usingFaucet = false;
+      return "";
     }
   }
 }
