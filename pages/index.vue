@@ -35,6 +35,8 @@ export default {
       metamask: null,
       account: "",
       balance: -1,
+      walletBalance: 0,
+      walletBalanceChecking: false,
       contractAddress: appConfig.ERC20_CONTRACT,
       recipientAddress: "",
       activeContract: null,
@@ -128,10 +130,12 @@ export default {
           console.log("accountsChanged");
           this.account = accounts[0];
           this.balance = await this.getTokenBalance();
+          this.getWalletBalance();
         }); 
 
 
-        window.localStorage.setItem('connectedBefore', '1')
+        window.localStorage.setItem('connectedBefore', '1');
+        this.getWalletBalance();
       }
     },
     hexToBytes(hex: String) {
@@ -168,12 +172,40 @@ export default {
             console.log("handleClick Error: ", err)
             this.info = "Error: Mint Failed!";
           });
+          this.getWalletBalance();          
         } catch (err) {
           this.minting = false;
           this.info = "Error: Mint failed";
           console.log(err);
         }
       }
+    },
+
+    async getWalletBalance() {
+      let balance = await web3Provider.getBalance(this.account);
+      this.walletBalance = ethers.utils.formatEther(balance);
+      console.log(this.walletBalance);
+    },
+
+    async rquestCoinsFromFaucet() {
+      var self = this;
+      this.usingFaucet = true;
+      var myCurrentBalance = this.walletBalance;
+      await this.getCoins(this.account);
+      const checkBalance = async () => {
+        await self.getWalletBalance();
+        if (myCurrentBalance == self.walletBalance) {
+          setTimeout(()=> {
+            console.log("Checking balance...");
+            checkBalance();
+          }, 1000);
+        } else {
+          self.walletBalanceChecking = false;
+        }
+      }
+      self.usingFaucet = false;
+      self.walletBalanceChecking = true;
+      checkBalance();
     },
 
     async getTokenBalance() {
@@ -247,13 +279,15 @@ export default {
             console.log("Transfer Failed!");
             this.info = "Transfer Failed!";
           });
-
+          this.getWalletBalance();          
         } catch (err) {
           this.transferring = false;
           this.info = "Error: Transfer failed!";
         }
       }
     },
+
+    
   },
 
 
@@ -355,10 +389,11 @@ export default {
       </div>
       <div v-if="activeContract === null" style="font-size: 12px; margin-top: -5px">Please load contract to interact with it</div>
       <div>
-        <v-btn class="btn" color="#FC4A1A" rounded @click="getCoins(account)" :disabled="account === '' || usingFaucet" style="margin-top: 10px">
+        <v-btn class="btn" color="#FC4A1A" rounded @click="rquestCoinsFromFaucet()" :disabled="account === '' || usingFaucet" style="margin-top: 10px">
           {{ usingFaucet ? "Please wait..." : "Get Coins from faucet" }} 
-        </v-btn>      
+        </v-btn>
       </div>
+      <div style="font-size: 12px; margin-top: -10px">My FHE wallet balance: {{  walletBalanceChecking ? "refreshing..." :  walletBalance }}</div>
     </template>
 
     <v-dialog v-model="showSend" width="400" persistent>

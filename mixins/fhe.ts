@@ -35,7 +35,6 @@ var mixin = {
     },
 
     async getCoins(address: string): Promise<string> {
-      this.usingFaucet = true;
       try {
         const result = await this.$axios.get(`${appConfig.ENCRYPTION_SERVICE}/faucet/faucet?address=${address}`, {
           headers: { "content-type": "appliaction/json" }
@@ -47,7 +46,6 @@ var mixin = {
       } catch (err) {
         console.log(err);
       }
-      this.usingFaucet = false;
       return "";
     }
   }
