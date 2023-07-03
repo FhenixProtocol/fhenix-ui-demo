@@ -654,7 +654,7 @@ export default {
   }
 
   .settings-panel {
-    min-width: 270px;
+    min-width: 280px;
     height: 100vh;
     position: relative;
     display: flex;
@@ -800,7 +800,7 @@ export default {
 
       border-radius: 15px; 
       padding: 10px; 
-      width: 90%;
+      width: 95%;
 
       /* border: 2px solid white;  */
       border-left-width: 1px;
