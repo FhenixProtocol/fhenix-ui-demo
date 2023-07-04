@@ -28,7 +28,9 @@
   font-display: auto;
 }
 
-
+html {
+  background-color: #222222;    
+}
 
 body {
     /* background-color: #222222; */
@@ -53,6 +55,7 @@ body {
   }
 
   #background-video {
+
   width: 100vw;
   height: 100vh;
   object-fit: cover;
