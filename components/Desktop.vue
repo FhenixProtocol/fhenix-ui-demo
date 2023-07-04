@@ -502,7 +502,7 @@ export default {
       <div v-if="isConnected" class="account-info">
         <div>Account: <span style="font-family: monospace">{{ shortAddress(account) }}</span></div>
         <div style="margin-bottom: 0px;">Balance: <span style="font-family: monospace; color: #FC4A1A; font-weight: bold">{{  walletBalanceChecking ? "refreshing..." :  walletBalance.toFixed() }}</span> <span v-if="!walletBalanceChecking" style="font-family: monospace">FHE</span></div>
-        <v-btn class="btn" :class="showLowTokenWarning && !(usingFaucet || walletBalanceChecking) ? 'button-focus-animation' : ''" :loading="usingFaucet || walletBalanceChecking" color="#FC4A1A" rounded @click="rquestCoinsFromFaucet()" :disabled="account === '' || usingFaucet || walletBalanceChecking || walletBalance > 1100" style="margin-top: 10px">
+        <v-btn class="btn" :class="showLowTokenWarning && !(usingFaucet || walletBalanceChecking) ? 'button-focus-animation' : ''" :loading="usingFaucet || walletBalanceChecking" color="#FC4A1A" rounded @click="rquestCoinsFromFaucet()" :disabled="account === '' || usingFaucet || walletBalanceChecking || walletBalance > 50" style="margin-top: 10px">
           <template v-slot:default>
             <!-- <v-tooltip activator="parent" location="bottom">Get coins from the faucet if you to allow execute transactions</v-tooltip> -->
             Get coins
