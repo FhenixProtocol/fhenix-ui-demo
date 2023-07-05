@@ -57,6 +57,11 @@ export default {
     if (connectedBefore) {
       this.connect();
     }
+
+    var alreadySawTip = window.localStorage.getItem('alreadySawTip');
+    if (alreadySawTip) {
+      this.showEncryptionInfo = false;
+    }
     this.loadHistory();
 
   },
@@ -81,6 +86,7 @@ export default {
       showSend: false,
       transferring: false,
       explorer: appConfig.BLOCK_EXPLORER,
+      showEncryptionInfo: true,
       amountRules: [
         value => {
           if (value) return true
@@ -136,7 +142,7 @@ export default {
   },
   computed: {
     historyItems() {
-      return Array.from(this.history.values());
+      return Array.from(this.history.values()).reverse();
     },
 
     contractAddress() {
@@ -181,6 +187,13 @@ export default {
 
   },
   methods: {
+    gotIt() {
+      this.showEncryptionInfo = false;
+      window.localStorage.setItem('alreadySawTip', '1');
+    },
+    openExplorer(tx: string) {
+      window.open(this.explorer + '/tx/' + tx + '/raw-trace', "_blank");
+    },
     shortAddress(address: string) {
       
 
@@ -525,11 +538,37 @@ export default {
       </div> -->
       <div>
         <div class="action-panel" :class="enableEncryption ? 'encrypted' : 'non-encrypted'">
+          
+          <div v-if="showEncryptionInfo" style="position: absolute; top: 55px; right: -50px; z-index: 20">
+            <div class="triangle-tooltip">
+            <!-- <p>Switch between encrypted and not encrypted contract</p> -->
+            <div> 
+              <table>
+                <tr> 
+                  <td style="white-space: nowrap; vertical-align:top"><span style="color: red">Off</span>&nbsp;-&nbsp;&nbsp;</td>
+                  <td>Standard ERC20 contract</td>
+                </tr>
+                <tr><td colspan="2" style="font-size: 2px">&nbsp;</td></tr>
+                <tr> 
+                  <td style="white-space: nowrap; vertical-align:top"><span style="color: green">On</span>&nbsp;-&nbsp;&nbsp;</td>
+                  <td>Modified ERC20 contract with FHE encryption enabled</td>
+                </tr>
+                <tr><td colspan="2" style="padding-top: 10px; text-align: right">
+                  <v-btn density="compact" rounded color="primary" @click="gotIt">Got it!</v-btn>
+                </td></tr>
+                
+              </table>
+              
+            </div>
+            <span class="triangle"></span>
+            </div>
+          </div>
+
           <div style="font-size: 24px; display: flex; align-items: center; gap: 10px">
             <b>Contract:</b> <span style="font-family: monospace">{{ shortAddress(contractAddress) }}</span> 
             <v-btn color="primary" density="compact" icon @click="copyToClipboard(contractAddress)" size="small">
               <template v-slot:default>
-                <v-tooltip activator="parent" location="end">Copy</v-tooltip>
+                <v-tooltip activator="parent" location="bottom">Copy</v-tooltip>
 
               <v-icon size="x-small" icon="mdi-content-copy"></v-icon>
               </template>
@@ -597,6 +636,7 @@ export default {
                   <v-btn :disabled="transferring" :loading="transferring" color="primary" rounded style="position: absolute; bottom: 10px; right: 10px" @click="sendTokens()">
                     Send
                   </v-btn>
+                  <v-btn :disabled="showLowTokenWarning || minting || transferring" :loading="minting" color="primary" rounded style="position: absolute; bottom: 10px; left: 10px" @click="mintToken(10)">Mint 10 More Tokens</v-btn>
                 </div>
               </v-carousel-item>            
             </v-carousel>
@@ -616,7 +656,35 @@ export default {
           </div>        
         </v-expand-transition>
       </div>
-      <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 100px; margin-left: 10px; max-height: 600px; overflow-y: auto">
+    </div>
+    <div class="history-panel">
+      <v-list style="width: 95%; background: none; color: white">
+        <v-list-subheader color="white">Last UI Activity</v-list-subheader>
+
+        <v-list-item
+          v-for="(item, i) in historyItems"
+          :key="i"
+          :value="item"
+          color="primary"
+        >
+          <template v-slot:prepend>
+            <v-tooltip activator="parent" location="start">{{ item.encrypted ? "Encrypted" : "Not Encrypted"}}</v-tooltip>
+            <v-icon :icon="item.encrypted ? 'mdi-lock' : 'mdi-lock-open'"></v-icon>
+          </template>
+          <template v-slot:append>
+            <v-btn icon="mdi-open-in-new" density="compact" @click="openExplorer(item.tx)" ></v-btn>
+          </template>
+          <v-list-item-title>{{ shortAddress(item.tx) }}</v-list-item-title>
+          <v-list-item-subtitle>Action: {{ item.action }}</v-list-item-subtitle>
+          <v-list-item-subtitle>Status: {{ item.status }}</v-list-item-subtitle>
+        </v-list-item>
+      </v-list>
+      <div style="width: 100%; text-align: center; margin-top: 20px">
+        <v-btn color="primary" rounded v-if="historyItems.length > 0" @click="clearHistory">Clear History</v-btn>
+      </div>
+      
+
+      <!-- <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 100px; margin-left: 10px; max-height: 600px; overflow-y: auto">
         <div>Transaction History</div>
         <table class="data-table" cellpadding="2" cellspacing="2">
           <thead>
@@ -637,7 +705,7 @@ export default {
           </tbody>
         </table>
         <v-btn color="primary" rounded v-if="historyItems.length > 0" @click="clearHistory">Clear History</v-btn>
-      </div>
+      </div> -->
     </div>
   </div>
 </template>
@@ -674,8 +742,32 @@ export default {
       rgba(0, 0, 0, 0.0) 100px,
       #FF5C00
     ) 0 100%;
+  }
+
+  .history-panel {
+    min-width: 380px;
+    height: 100vh;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+
+    background-image: linear-gradient(
+      to bottom, 
+      rgba(0, 0, 0, 0.0),
+      rgba(10, 10, 10, 0.3)
+    );
+    backdrop-filter: blur(7px);
+    border-left-width: 2px;    
+    border-image: 
+    linear-gradient(
+      to bottom, 
+      rgba(0, 0, 0, 0.0) 100px,
+      #FF5C00
+    ) 0 100%;
 
   }
+
 
   .content-blocker {
     position: absolute; 
@@ -904,6 +996,38 @@ export default {
   background-color: rgba(128, 128, 128, 0.164);
 }
 
+</style>
+
+<style lang="scss" scoped>
+.triangle-tooltip {
+ position: relative;
+ background-color: rgba(0, 0, 0, 1);
+ padding: 10px;
+ width: 350px;
+ height: 130px;
+ border-radius: 0.55em;
+ display: flex;
+ justify-content: center;
+ align-items: center;
+ font-size: 14px;
+ border: 2px solid rgba(255, 255, 255, 0.164);
+ 
+}
+
+.triangle {
+ display: block;
+ height: 20px;
+ width: 20px;
+ background-color: inherit;
+ border: inherit;
+ position: absolute;
+ top: -10px;
+ left: calc(50% - 10px);
+ clip-path: polygon(0% 0%, 100% 100%, 0% 100%);
+ transform: rotate(135deg);
+ border-radius: 0 0 0 0.25em;
+
+}
 
 
 </style>
