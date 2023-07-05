@@ -94,8 +94,12 @@ export default {
           return 'Amount is requred.'
         },
         value => {
-          if (value > 0) return true
-
+          if (value > 0) {
+            if (value % 1 != 0) {
+              return 'Decimal numbers are not allowed'
+            }
+            return true;
+          }
           return 'Amount must be greater than 0.'
         },
       ],
@@ -629,8 +633,8 @@ export default {
                   <div style="line-height: 30px">
                     <div style="font-weight: bold; font-size: 16px">Send Tokens:</div>
                     <div style="display: flex; gap: 10px">
-                      <v-text-field ref="recipient" style="flex-grow: 2;" density="compact" label="Send To"></v-text-field>
-                      <v-text-field ref="amount" variant="filled" style="flex-grow: 1;" density="compact" label="Amount"></v-text-field>
+                      <v-text-field :rules="recipientRules" ref="recipient" style="flex-grow: 2;" density="compact" label="Send To"></v-text-field>
+                      <v-text-field :rules="amountRules" ref="amount" variant="filled" style="flex-grow: 1;" density="compact" label="Amount"></v-text-field>
                     </div>
                   </div>
                   <v-btn :disabled="transferring" :loading="transferring" color="primary" rounded style="position: absolute; bottom: 10px; right: 10px" @click="sendTokens()">
