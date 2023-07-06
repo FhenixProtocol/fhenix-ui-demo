@@ -754,7 +754,7 @@ export default {
     position: relative;
     display: flex;
     flex-direction: column;
-    align-items: start;
+    align-items: flex-start;
 
     background-image: linear-gradient(
       to bottom, 
