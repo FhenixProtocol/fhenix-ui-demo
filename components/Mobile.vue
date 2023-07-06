@@ -126,11 +126,26 @@ export default {
   animation: ring-1 1.5s infinite;
 }
 
-.button-focus-animation::after {
+
+
+.button-focus-animation-enc::after {
   content: '';
   width: 30px; height: 30px;
   border-radius: 100%;
   border: 3px solid #ff6600;
+  position: absolute;
+  z-index: 0;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: ring-1 1.5s infinite;  
+}
+
+.button-focus-animation::after {
+  content: '';
+  width: 30px; height: 30px;
+  border-radius: 100%;
+  border: 3px solid #2196F3;
   position: absolute;
   z-index: 0;
   top: 50%;
@@ -242,7 +257,7 @@ export default {
         <v-btn :disabled="balance < 1 || showLowTokenWarning || transferring || minting" :loading="transferring" color="primary" rounded style="" @click="showSend = true">
           Send
         </v-btn>
-        <v-btn :disabled="showLowTokenWarning || minting || transferring" :loading="minting" color="primary" rounded style="" @click="mintToken(10)">Mint 10 Tokens</v-btn>
+        <v-btn :class="balance < 1 ? (enableEncryption ? 'button-focus-animation-enc' : 'button-focus-animation') : ''" :disabled="showLowTokenWarning || minting || transferring" :loading="minting" color="primary" rounded style="" @click="mintToken(10)">Mint 10 Tokens</v-btn>
       </div>
       <div v-if="activeContract === null" style="font-size: 12px; margin-top: -5px">Please load contract to interact with it</div>
       
@@ -340,57 +355,5 @@ export default {
 
       </v-card>
       </swipe-modal>
-
-    <!-- <v-dialog v-model="showSend" width="400" persistent>
-      <v-card density="compact">
-        <v-card-title>
-          <span class="text-h6">Token Transfer</span>
-        </v-card-title>
-        <v-card-text>
-          <v-container fluid>
-            <v-row>
-              <v-col
-                cols="12"
-                sm="12"
-              >
-                <v-text-field
-                  label="Send To"
-                  required
-                  density="compact"
-                  ref="recipient"
-                  :rules="recipientRules"
-                ></v-text-field>
-                <v-text-field
-                  label="Amount"
-                  required
-                  density="compact"
-                  type="number"
-                  ref="amount"
-                  :rules="amountRules"                  
-                ></v-text-field>
-              </v-col>
-            </v-row>
-          </v-container>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn
-            color="blue-darken-1"
-            variant="text"
-            @click="showSend = false"
-          >
-            Close
-          </v-btn>
-          <v-btn
-            color="blue-darken-1"
-            variant="text"
-            @click="sendTokens()"
-          >
-            Send
-          </v-btn>
-        </v-card-actions>
-
-      </v-card>
-    </v-dialog>      -->
   </div>
 </template>
