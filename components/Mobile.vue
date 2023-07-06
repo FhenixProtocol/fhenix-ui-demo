@@ -178,7 +178,7 @@ export default {
     <img class="logo" src="~/assets/fhenix_logo.svg" />
     <template  v-if="account != ''">
       <div>Account: {{ shortAddress(account) }} 
-      <v-btn color="blue" density="compact" icon @click="copyToClipboard" size="small">
+      <v-btn color="blue" density="compact" icon @click="copyToClipboard(account)" size="small">
         <template v-slot:default>
           <v-tooltip activator="parent" location="end">Copy</v-tooltip>
 
