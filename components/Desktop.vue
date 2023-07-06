@@ -133,7 +133,7 @@ export default {
           <div style="width: 100%; height: 1px; background-color: rgba(255, 255, 255, 0.171);"></div>
         
           <div style="margin-top: 10px; width: 100%; flex-grow: 1; position: relative; overflow: hidden;">
-            <div>Contract Balance: {{ balance }} {{ enableEncryption ? 'FHET' : 'TOKEN' }}</div>
+            <div>Contract Balance: {{ balance }} {{ enableEncryption ? 'FHET' : 'TKN' }}</div>
             <transition name="fade">
               <div class="lock-container" v-if="enableEncryption && showEncryptionAnimation">
                 <audio ref="audioPlayer" :src="audioSource" />
