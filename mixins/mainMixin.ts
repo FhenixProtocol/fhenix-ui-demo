@@ -1,6 +1,7 @@
 
 import MetaMaskSDK from '@metamask/sdk';
 import FHEMixin from '../mixins/fhe';
+import globalMixin from '../mixins/globalMixin';
 
 //import Web3 from 'web3'
 import { ethers } from "ethers";
@@ -13,7 +14,6 @@ import appConfig from '../config/appConfig.json'
 import encryptionOn from '../assets/lottie/encryption-on.json'
 import audioFile from '~/assets/audio/encryption-on.mp3'
 
-import { useTheme } from 'vuetify'
 
 // They should be non-reactive variables
 var web3Provider;
@@ -26,7 +26,8 @@ const fromHexString = (hexString: string): Uint8Array => {
 };
 
 export default {
-  mixins: [FHEMixin],    
+  mixins: [FHEMixin, globalMixin],    
+
 
   created() {
     console.log(`Created!`);
@@ -108,6 +109,10 @@ export default {
       var self = this;
       this.showEncryptionAnimation = true;
       let bgVideo = document.getElementById("background-video");
+      let cssName = "enc-bg";
+      if (this.isMobile) {
+        cssName = "enc-bg-mobile";
+      } 
       if (state === true) {
         setTimeout(() => {
           self.$refs.lottieEncryptionOnAnimation.playSegments([50, 100], true); //.goToAndPlay(50);
@@ -120,15 +125,19 @@ export default {
         }, 300);
         // let audio = new Audio('../assets/audio/encryption-on.mp3');   
         // audio.play();
-        bgVideo.classList.add("enc-bg");
+        bgVideo.classList.add(cssName);
       } else {
-        bgVideo.classList.remove("enc-bg");
+        bgVideo.classList.remove(cssName);
       }
       this.toggleTheme();
       this.loadContract();
     }
   },
   computed: {
+    isMobile() {
+      return this.$global.isMobile();
+    },
+
     historyItems() {
       return Array.from(this.history.values()).reverse();
     },
@@ -143,18 +152,6 @@ export default {
       }
     },
 
-    infoBoxAnimatedStyle() {
-      let bgColor = "rgba(10, 10, 10, 0.4)";
-      let infoHeight = "35px";
-
-      if (this.info !== "") {
-        infoHeight = "35px";
-        if (this.info.indexOf("Error:") !== -1) {
-          bgColor = "rgba(200, 100, 100, 0.6)";
-        }        
-      }
-      return { "--info-height" : infoHeight, "--bg-color": bgColor };
-    },
     showProgress() {
       if (this.info === "") {
         return false

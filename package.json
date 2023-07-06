@@ -21,6 +21,7 @@
     "@metamask/sdk": "^0.3.0",
     "@nuxt/ui": "^0.4.1",
     "@nuxtjs/axios": "^5.13.6",
+    "@takuma-ru/vue-swipe-modal": "^4.0.7",
     "axios": "^1.4.0",
     "ethers": "^5.7",
     "ethers-eip712": "^0.2.0",

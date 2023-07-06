@@ -1,10 +1,13 @@
 <script lang="ts">
 import Desktop from '@/components/Desktop';
 import Mobile from '@/components/Mobile';
+import globalMixin from '../mixins/globalMixin';
 
 
 export default {
-    components: { Desktop },
+  components: { Desktop, Mobile },
+  mixins: [globalMixin],
+
   created() {
     console.log(`Created!`);
   },
@@ -17,6 +20,9 @@ export default {
   watch: {
   },
   computed: {
+    isMobile() {
+      return this.$global.isMobile();
+    },    
   },
   methods: {
   }
@@ -24,5 +30,7 @@ export default {
 </script>
 
 <template>
-  <desktop></desktop>
+  <mobile v-if="isMobile"></mobile>
+  <desktop v-else></desktop>
+
 </template>

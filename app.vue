@@ -1,12 +1,12 @@
 <template>
-  <v-app class="main">
-    <video id="background-video" ref="background-video" :class="bgClass" autoplay loop muted>
+  <v-app class="main enc-bg-mobile" :class="isMobile ? 'main-mobile' : ''">
+    <video v-if="!isMobile" id="background-video" ref="background-video" :class="bgClass" autoplay loop muted>
       <source src="~/assets/video/bg.mp4" type="video/mp4">
     </video>
+    <div v-else id="background-video"  :class="bgClass"></div>
     <v-main>
       <NuxtPage />
     </v-main>
-    
   </v-app>
 </template>
 
@@ -50,8 +50,11 @@ body {
     align-items: center;
     gap: 10px;
     background: none;
-    /* background: url('~/assets/bg.png') no-repeat center bottom;
-    background-size: contain; */
+  }
+
+  .main-mobile {
+    background: url('~/assets/bg.png') no-repeat center bottom;
+    background-size: cover;
   }
 
   #background-video {
@@ -72,13 +75,18 @@ body {
   -webkit-filter: hue-rotate(180deg);
 }
 
+.enc-bg-mobile {
+  
+}
+
+.enc-bg-mobile::after {
+  -webkit-filter: hue-rotate(180deg);
+}
+
 </style>
 
 <script setup lang="ts">
 import 'vue3-lottie/dist/style.css'
-// const { $globalMixin } = useNuxtApp()
-
-
 </script>
 
 
@@ -91,14 +99,19 @@ export default {
     console.log(`Created App!`);
   },
   mounted() {
-          console.log("$$$$")
-      console.log(this.$globalMixin);
-      console.log("$$$$")
 
+  },
+  watch: {
+    bgClass(newClass, oldClass) {
+      console.log("%%%%%%%%%%%%%%%%%%%%%%%%%%%%", this.isMobile);
+    }
   },
   computed: {
     bgClass() {
       return this.$global.bgEncrypted ? "enc-bg" : "";
+    },
+    isMobile() {
+      return this.$global.isMobile();
     }
   }
 }

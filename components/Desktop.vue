@@ -7,7 +7,6 @@ import { useTheme } from 'vuetify'
 
 export default {
   mixins: [mainMixin, FHEMixin],
-
   setup () {
     const theme = useTheme();
     return {
@@ -16,6 +15,20 @@ export default {
         return theme.global.name.value = theme.global.name.value === 'nonEncryptedTheme' ? 'encryptedTheme' : 'nonEncryptedTheme';
       } 
     }
+  },   
+  computed: {
+    infoBoxAnimatedStyle() {
+      let bgColor = "rgba(10, 10, 10, 0.4)";
+      let infoHeight = "35px";
+
+      if (this.info !== "") {
+        infoHeight = "35px";
+        if (this.info.indexOf("Error:") !== -1) {
+          bgColor = "rgba(200, 100, 100, 0.6)";
+        }        
+      }
+      return { "--info-height" : infoHeight, "--bg-color": bgColor };
+    },
   }
 }
 </script>
