@@ -1,5 +1,7 @@
+
 import MetaMaskSDK from '@metamask/sdk';
 import FHEMixin from '../mixins/fhe';
+
 //import Web3 from 'web3'
 import { ethers } from "ethers";
 
@@ -11,12 +13,21 @@ import appConfig from '../config/appConfig.json'
 import encryptionOn from '../assets/lottie/encryption-on.json'
 import audioFile from '~/assets/audio/encryption-on.mp3'
 
+import { useTheme } from 'vuetify'
+
 // They should be non-reactive variables
 var web3Provider;
 var web3Signer;
 
+const fromHexString = (hexString: string): Uint8Array => {
+  const arr = hexString.replace(/^(0x)/, '').match(/.{1,2}/g);
+  if (!arr) return new Uint8Array();
+  return Uint8Array.from(arr.map((byte) => parseInt(byte, 16)));
+};
+
 export default {
   mixins: [FHEMixin],    
+
   created() {
     console.log(`Created!`);
   },
@@ -31,6 +42,12 @@ export default {
       this.connect();
     }
 
+    var alreadySawTip = window.localStorage.getItem('alreadySawTip');
+    if (alreadySawTip) {
+      this.showEncryptionInfo = false;
+    }
+    this.loadHistory();
+
   },
   data() {
     return {
@@ -39,11 +56,12 @@ export default {
       enableEncryption: false,
       encryptionOn: encryptionOn,
       showEncryptionAnimation: false,
+      showSendTokensScreen: false,
+      pageIdx: 0,
       account: "",
       balance: -1,
       walletBalance: 0,
       walletBalanceChecking: false,
-      contractAddress: appConfig.ENC_ERC20_CONTRACT,
       recipientAddress: "",
       activeContract: null,
       loadingContract: false,
@@ -51,6 +69,8 @@ export default {
       info: "", 
       showSend: false,
       transferring: false,
+      explorer: appConfig.BLOCK_EXPLORER,
+      showEncryptionInfo: true,
       amountRules: [
         value => {
           if (value) return true
@@ -58,8 +78,12 @@ export default {
           return 'Amount is requred.'
         },
         value => {
-          if (value > 0) return true
-
+          if (value > 0) {
+            if (value % 1 != 0) {
+              return 'Decimal numbers are not allowed'
+            }
+            return true;
+          }
           return 'Amount must be greater than 0.'
         },
       ],
@@ -70,33 +94,61 @@ export default {
           return 'Recipient is requred.'
         }
       ],
-      
       audioSource: audioFile,
-
-
+      history: new Map(),
+      historyHeaders: [
+        { text: 'Transaction', value: 'tx' },
+        { text: 'Encrypted', value: 'enctrypted' },
+        { text: 'Status', value: 'status' }
+      ]
     }
   }, 
   watch: {
     enableEncryption(state) {
       var self = this;
       this.showEncryptionAnimation = true;
+      let bgVideo = document.getElementById("background-video");
       if (state === true) {
         setTimeout(() => {
           self.$refs.lottieEncryptionOnAnimation.playSegments([50, 100], true); //.goToAndPlay(50);
-          setTimeout(() => { self.$refs.audioPlayer.play(); }, 300);
+          setTimeout(() => { 
+            try {
+              self.$refs.audioPlayer.play(); 
+            } catch {}
+            
+          }, 300);
         }, 300);
         // let audio = new Audio('../assets/audio/encryption-on.mp3');   
         // audio.play();
+        bgVideo.classList.add("enc-bg");
+      } else {
+        bgVideo.classList.remove("enc-bg");
       }
+      this.toggleTheme();
+      this.loadContract();
     }
   },
   computed: {
+    historyItems() {
+      return Array.from(this.history.values()).reverse();
+    },
+
+    contractAddress() {
+      return this.enableEncryption ? appConfig.ENC_ERC20_CONTRACT : appConfig.NON_ENC_ERC20_CONTRACT;
+    },
+    colorScheme() {
+      return {
+        ButtonColor: this.enableEncryption ? "#FC4A1A" : "primary"
+        //ButtonTextColor: 
+      }
+    },
+
     infoBoxAnimatedStyle() {
       let bgColor = "rgba(10, 10, 10, 0.4)";
       let infoHeight = "35px";
 
       if (this.info !== "") {
-        infoHeight = "60px";
+        infoHeight = "35px";
         if (this.info.indexOf("Error:") !== -1) {
           bgColor = "rgba(200, 100, 100, 0.6)";
         }        
@@ -110,16 +162,36 @@ export default {
         return false;
       }
       return true;
+    },
+    
+    isConnected() {
+      return this.account !== '';
+    },
+
+    showLowTokenWarning() {
+      return this.walletBalance < 10;
     }
+
+
   },
   methods: {
+    gotIt() {
+      this.showEncryptionInfo = false;
+      window.localStorage.setItem('alreadySawTip', '1');
+    },
+    openExplorer(tx: string) {
+      window.open(this.explorer + '/tx/' + tx + '/raw-trace', "_blank");
+    },
     shortAddress(address: string) {
-      if (address != "") {
+      
+
+      if (address !== undefined && address !== "") {
         return address.slice(0, 9) + '…' + address.slice(address.length - 6);
       }
       return "";
     },    
     async connect() {
+      console.log(ethers);
       let accounts = await this.metamask.request({ method: 'eth_requestAccounts', params: [] });
       if (accounts && accounts.length > 0) {
         console.log(accounts);
@@ -160,6 +232,8 @@ export default {
 
         window.localStorage.setItem('connectedBefore', '1');
         this.getWalletBalance();
+
+        this.loadContract();
       }
     },
     hexToBytes(hex: String) {
@@ -169,45 +243,92 @@ export default {
       return bytes;
     },
 
+    saveHistory() {
+      const obj = Object.fromEntries(this.history);
+      window.localStorage.setItem('transactionHistory', JSON.stringify(obj));
+    },
+
+    loadHistory() {
+      const obj = JSON.parse(window.localStorage.getItem('transactionHistory') || '{}');
+      this.history = new Map(Object.entries(obj));
+    },
+
+    clearHistory() {
+      this.history.clear();
+      this.saveHistory();
+    },
+
+    updateStatus(tx: string, newStatus: string) {
+      if (this.history.has(tx)) {
+        let entry = this.history.get(tx);
+        if (entry) {
+          entry.status = newStatus;
+          this.history.set(tx, entry);
+        }
+        this.saveHistory();
+      }
+    },
+
 
     async mintToken(amount: number) {
-      console.log("Minting...");
       if (this.activeContract !== null) {
+        this.minting = true;
         try {
-          this.minting = true;  
-          this.info = "Minting; Encrypting amount...";
-          console.log("Encrypting...");
-          let mintAmount = await this.encrypt(amount);
-          const encryptedAmount = this.hexToBytes(mintAmount);
-          this.info = "Minting; Sending transaction...";
-          let tx = await this.activeContract.mint(encryptedAmount, { gasLimit: 10000000000 })
-          console.log(tx);
+          var tx = null;
+          if (this.enableEncryption) {
+            this.info = "Minting; Encrypting amount...";
+            console.log("Encrypting...");
+            let mintAmount = await this.encrypt(amount);
+            console.log(mintAmount);
+            const encryptedAmount = this.hexToBytes(mintAmount);
+            let aa = fromHexString(mintAmount);
+            this.info = "Minting; Sending transaction...";
+            tx = await this.activeContract.mint(encryptedAmount, { gasLimit: 10000000000 })
+          } else {
+            this.info = "Minting; Sending transaction...";
+            tx = await this.activeContract.mint(amount); //, { gasLimit: 5000000000 }
+          }
 
-          this.info = "Minting; Waiting for confirmation...";
-          
-          tx.wait().then(async (receipt) => {
-            this.minting = false;
-            console.log("Mint Successful!")
-            console.log(receipt);
-            this.balance = await this.getTokenBalance();
-            this.info = "";
-          }).catch((err) => {
-            this.minting = false;
-            console.log("handleClick Error: ", err)
-            this.info = "Error: Mint Failed!";
-          });
-          this.getWalletBalance();          
+          if (tx !== null) {
+            console.log(tx);
+            this.history.set(tx.hash, {
+              tx: tx.hash,
+              encrypted: this.enableEncryption,
+              status: "Pending",
+              action: "Mint"
+            });
+            this.saveHistory();
+            this.info = "Minting; Waiting for confirmation...";
+            
+            tx.wait().then(async (receipt) => {
+              this.updateStatus(tx.hash, "Success");
+              this.minting = false;
+              console.log("Mint Successful!")
+              console.log(receipt);
+              this.balance = await this.getTokenBalance();
+              this.info = "";
+            }).catch((err) => {
+              this.minting = false;
+              this.updateStatus(tx.hash, "Failed");
+              console.log("handleClick Error: ", err)
+              this.info = "Error: Mint Failed!";
+            });
+            this.getWalletBalance();            
+          }
         } catch (err) {
           this.minting = false;
           this.info = "Error: Mint failed";
           console.log(err);
         }
+
       }
     },
 
     async getWalletBalance() {
+      console.log("Checking balance...")
       let balance = await web3Provider.getBalance(this.account);
-      this.walletBalance = ethers.utils.formatEther(balance);
+      console.log("!!", balance);
+      this.walletBalance = parseFloat(ethers.utils.formatEther(balance));
       console.log(this.walletBalance);
     },
 
@@ -241,30 +362,47 @@ export default {
       let balance = -1;
       try {
         this.info = "Querying balance from contract..."
-        let encBalance = await this.activeContract.balanceOf();
-        console.log(typeof encBalance);
-        console.log(encBalance);
-        this.info = "Decrypting balance..."
-        balance = await this.decrypt(encBalance.slice(2));
-        this.info = ""
+        if (this.enableEncryption) {
+          balance = await this.getFHETokenBalance(web3Provider);
+          console.log("@@@@@@@@@@", balance);
+        } else {
+          console.log(this.account);
+          let result = await this.activeContract.balanceOf(this.account);
+          balance = parseFloat(result);
+        }
       } catch (err) {
         this.info = "Error: Cannot read balance (does account exist?)";
         console.error("Balance error");
         console.error(err);
       }
       this.loadingContract = false;
+      this.info = "";
+      if (balance > 0) {
+        this.pageIdx = 1;
+      } else {
+        this.pageIdx = 0;
+      }
+
       return balance;
     },
 
-    copyToClipboard() {
-      navigator.clipboard.writeText(this.account);      
+    copyToClipboard(what: string) {
+      navigator.clipboard.writeText(what);
     },
 
     async loadContract() {
       this.loadingContract = true;
       this.info = "Loading contract...";
-      this.activeContract = new ethers.Contract(this.contractAddress, ABIENC, web3Signer);
-      this.balance = await this.getTokenBalance();
+      this.activeContract = new ethers.Contract(this.contractAddress, (this.enableEncryption) ? ABIENC : ABI, web3Signer);
+      console.log(this.activeContract);
+      try {
+        this.balance = await this.getTokenBalance();
+      } catch (err) {}
+      if (this.balance > 0) {
+        this.pageIdx = 1;
+      } else {
+        this.pageIdx = 0;
+      }
       console.log("My Balance", this.balance);
       this.loadingContract = false;
     },
@@ -281,29 +419,44 @@ export default {
         try {
           this.showSend = false;
           this.transferring = true;  
-          this.info = "Token Transfer; Encrypting amount...";
-          console.log("Encrypting amount...");
-          let mintAmount = await this.encrypt(amount);
-          const encryptedAmount = this.hexToBytes(mintAmount);
-          this.info = "Token Transfer; Sending transaction...";
-          let tx = await this.activeContract.transfer(recipient, encryptedAmount, { gasLimit: 10000000000 })
-          console.log(tx);
-
+          var tx = null;
+          if (this.enableEncryption) {
+            this.info = "Token Transfer; Encrypting amount...";
+            console.log("Encrypting amount...");
+            let mintAmount = await this.encrypt(amount);
+            const encryptedAmount = this.hexToBytes(mintAmount);
+            this.info = "Token Transfer; Sending transaction...";
+            tx = await this.activeContract.transfer(recipient, encryptedAmount, { gasLimit: 10000000000 })
+          } else {
+            this.info = "Token Transfer; Sending transaction...";
+            tx = await this.activeContract.transfer(recipient, amount); //, { gasLimit: 10000000000 })
+          }
           this.info = "Token Transfer; Waiting for confirmation...";
-          
-          tx.wait().then(async (receipt) => {
-            this.transferring = false;
-            console.log("Transfer Successful!");
-            console.log(receipt);
-            this.info = "";
-            this.balance = await this.getTokenBalance();
-          }).catch((err) => {
-            this.transferring = false;
-            console.log("handleClick Error: ", err)
-            console.log("Transfer Failed!");
-            this.info = "Transfer Failed!";
-          });
-          this.getWalletBalance();          
+          if (tx) {
+            this.history.set(tx.hash, {
+              tx: tx.hash,
+              encrypted: this.enableEncryption,
+              status: "Pending",
+              action: "Send Tokens"
+            });
+            this.saveHistory();
+            console.log(tx);            
+            tx.wait().then(async (receipt) => {
+              this.updateStatus(tx.hash, "Success");
+              this.transferring = false;
+              console.log("Transfer Successful!");
+              console.log(receipt);
+              this.info = "";
+              this.balance = await this.getTokenBalance();
+            }).catch((err) => {
+              this.updateStatus(tx.hash, "Failed");
+              this.transferring = false;
+              console.log("handleClick Error: ", err)
+              console.log("Transfer Failed!");
+              this.info = "Transfer Failed!";
+            });
+          }
+          this.getWalletBalance();    
         } catch (err) {
           this.transferring = false;
           this.info = "Error: Transfer failed!";
@@ -323,7 +476,6 @@ export default {
       console.log("Animation Complete!")
       this.showEncryptionAnimation = false;
     }
-  }
-
+  }  
 
 }
