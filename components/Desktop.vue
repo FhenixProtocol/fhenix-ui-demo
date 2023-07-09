@@ -40,7 +40,7 @@ export default {
       } else {
         this.qrInfo = {
           expanded: true,
-          size: "400px",
+          size: "300px",
           radius: "20px",
           padding: "20px",
           componentSize: 300
@@ -596,6 +596,7 @@ export default {
   cursor: pointer;
   transition: all .4s cubic-bezier(.47,1.64,.41,.8);
 }
+
 
 
 </style>
