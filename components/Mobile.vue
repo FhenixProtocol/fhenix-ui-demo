@@ -367,7 +367,7 @@ export default {
           <template v-slot:prepend>
             <div style="height: 24px; width: 24px"><img src="~/assets/metamask.logo.svg" /></div>
           </template>
-          Open MetaMask
+          Open With MetaMask
         </v-btn>
       </template>
   </div>
