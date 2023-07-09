@@ -257,7 +257,7 @@ export default {
         <v-btn :disabled="balance < 1 || showLowTokenWarning || transferring || minting" :loading="transferring" color="primary" rounded style="" @click="showSend = true">
           Send
         </v-btn>
-        <v-btn :class="balance < 1 ? (enableEncryption ? 'button-focus-animation-enc' : 'button-focus-animation') : ''" :disabled="showLowTokenWarning || minting || transferring" :loading="minting" color="primary" rounded style="" @click="mintToken(10)">Mint 10 Tokens</v-btn>
+        <v-btn :class="balance < 1 && !minting ? (enableEncryption ? 'button-focus-animation-enc' : 'button-focus-animation') : ''" :disabled="showLowTokenWarning || minting || transferring" :loading="minting" color="primary" rounded style="" @click="mintToken(10)">Mint 10 Tokens</v-btn>
       </div>
       <div v-if="activeContract === null" style="font-size: 12px; margin-top: -5px">Please load contract to interact with it</div>
       
