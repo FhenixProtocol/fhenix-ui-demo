@@ -40,7 +40,7 @@ export default {
   },
   methods: {
     openMetaMask() {
-      window.location.href = "https://metamask.app.link/dapp/fhenix-demo.pages.dev";      
+      window.location.href = this.mmDeepLink;
     }
   }
 }

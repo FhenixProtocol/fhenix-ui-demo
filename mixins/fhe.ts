@@ -16,10 +16,6 @@ var mixin = {
       self.sodium = _sodium;
       self.FHEKeypair = self.sodium.crypto_box_keypair("hex");
       self.FHEPublicKey = self.FHEKeypair.publicKey;
-
-      console.log("----")
-      console.log(JSON.stringify(self.FHEKeypair));
-      console.log("----")
     }
     load();
   },

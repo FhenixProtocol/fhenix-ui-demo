@@ -15,7 +15,39 @@ export default {
         return theme.global.name.value = theme.global.name.value === 'nonEncryptedTheme' ? 'encryptedTheme' : 'nonEncryptedTheme';
       } 
     }
-  },   
+  },
+  data() {
+    return {
+      qrInfo: {
+        expanded: false,
+        size: "50px",
+        radius: "5px",
+        padding: "5px",
+        componentSize: 50
+      }
+    }
+  },
+  methods: {
+    toggleQR() {
+      if (this.qrInfo.expanded) {
+        this.qrInfo = {
+          expanded: false,
+          size: "50px",
+          radius: "5px",
+          padding: "5px",
+          componentSize: 50
+        };
+      } else {
+        this.qrInfo = {
+          expanded: true,
+          size: "400px",
+          radius: "20px",
+          padding: "20px",
+          componentSize: 300
+        };
+      }
+    }
+  }, 
   computed: {
     infoBoxAnimatedStyle() {
       let bgColor = "rgba(10, 10, 10, 0.4)";
@@ -29,6 +61,9 @@ export default {
       }
       return { "--info-height" : infoHeight, "--bg-color": bgColor };
     },
+    qrStyle() {
+      return { "--qr-size": this.qrInfo.size, "--qr-radius": this.qrInfo.radius, "--qr-padding": this.qrInfo.padding };
+    }
   }
 }
 </script>
@@ -195,6 +230,11 @@ export default {
           </div>        
         </v-expand-transition>
       </div>
+      <div @click="toggleQR" class="qr-container" :style="qrStyle">
+        <qrcode-vue style="width: 100%; height: 100%" :size="500" :value="mmDeepLink" level="H" />
+      </div>
+  
+
     </div>
     <div class="history-panel">
       <v-list style="width: 95%; background: none; color: white">
@@ -298,6 +338,7 @@ export default {
   }
 
   .content-panel {
+    position: relative;
     display: flex; 
     width: 100%;
     height: 100vh;
@@ -541,7 +582,19 @@ export default {
  clip-path: polygon(0% 0%, 100% 100%, 0% 100%);
  transform: rotate(135deg);
  border-radius: 0 0 0 0.25em;
+}
 
+.qr-container {
+  position: absolute; 
+  bottom: 30px; 
+  left: 30px; 
+  height: var(--qr-size); 
+  width: var(--qr-size); 
+  background-color: white; 
+  padding: var(--qr-padding); 
+  border-radius: var(--qr-radius); 
+  cursor: pointer;
+  transition: all .4s cubic-bezier(.47,1.64,.41,.8);
 }
 
 

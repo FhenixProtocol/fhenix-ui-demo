@@ -36,8 +36,6 @@ export default {
     this.mmsdk = new MetaMaskSDK();
     this.metamask = this.mmsdk.getProvider(); // You can also access via window.ethereum
 
-    console.log(`Mounted!`, this.metamask)
-
     var connectedBefore = window.localStorage.getItem('connectedBefore');
     if (connectedBefore) {
       this.connect();
@@ -54,6 +52,7 @@ export default {
     return {
       mmsdk: null,
       metamask: null,
+      mmDeepLink: "https://metamask.app.link/dapp/fhenix-demo.pages.dev",
       enableEncryption: false,
       encryptionOn: encryptionOn,
       showEncryptionAnimation: false,
@@ -131,6 +130,7 @@ export default {
     }
   },
   computed: {
+    
     isMobile() {
       return this.$global.isMobile();
     },
@@ -185,10 +185,8 @@ export default {
       return "";
     },    
     async connect() {
-      console.log(ethers);
       let accounts = await this.metamask.request({ method: 'eth_requestAccounts', params: [] });
       if (accounts && accounts.length > 0) {
-        console.log(accounts);
         this.account = accounts[0];
         try {
           await this.metamask.request({ 
@@ -321,9 +319,7 @@ export default {
     async getWalletBalance() {
       console.log("Checking balance...")
       let balance = await web3Provider.getBalance(this.account);
-      console.log("!!", balance);
       this.walletBalance = parseFloat(ethers.utils.formatEther(balance));
-      console.log(this.walletBalance);
     },
 
     async rquestCoinsFromFaucet() {
@@ -360,7 +356,6 @@ export default {
           balance = await this.getFHETokenBalance(web3Provider);
           console.log("@@@@@@@@@@", balance);
         } else {
-          console.log(this.account);
           let result = await this.activeContract.balanceOf(this.account);
           balance = parseFloat(result);
         }
@@ -388,7 +383,6 @@ export default {
       this.loadingContract = true;
       this.info = "Loading contract...";
       this.activeContract = new ethers.Contract(this.contractAddress, (this.enableEncryption) ? ABIENC : ABI, web3Signer);
-      console.log(this.activeContract);
       try {
         this.balance = await this.getTokenBalance();
       } catch (err) {}
@@ -397,7 +391,6 @@ export default {
       } else {
         this.pageIdx = 0;
       }
-      console.log("My Balance", this.balance);
       this.loadingContract = false;
     },
 
