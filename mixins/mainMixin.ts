@@ -110,9 +110,6 @@ export default {
       this.showEncryptionAnimation = true;
       let bgVideo = document.getElementById("background-video");
       let cssName = "enc-bg";
-      if (this.isMobile) {
-        cssName = "enc-bg-mobile";
-      } 
       if (state === true) {
         setTimeout(() => {
           self.$refs.lottieEncryptionOnAnimation.playSegments([50, 100], true); //.goToAndPlay(50);

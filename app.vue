@@ -1,5 +1,5 @@
 <template>
-  <v-app class="main enc-bg-mobile" :class="isMobile ? 'main-mobile' : ''">
+  <v-app class="main">
     <video v-if="!isMobile" id="background-video" ref="background-video" :class="bgClass" autoplay loop muted>
       <source src="~/assets/video/bg.mp4" type="video/mp4">
     </video>
@@ -52,11 +52,6 @@ body {
     background: none;
   }
 
-  .main-mobile {
-    background: url('~/assets/bg.png') no-repeat center bottom;
-    background-size: cover;
-  }
-
   #background-video {
 
   width: 100vw;
@@ -69,18 +64,14 @@ body {
   top: 0;
   bottom: 0;
   z-index: -1;
+  background: url('~/assets/bg.png') no-repeat center bottom;
+  background-size: cover;
+  
+
 }
 
 .enc-bg {
-  -webkit-filter: hue-rotate(180deg);
-}
-
-.enc-bg-mobile {
-  
-}
-
-.enc-bg-mobile::after {
-  -webkit-filter: hue-rotate(180deg);
+  filter: hue-rotate(180deg);
 }
 
 </style>
@@ -102,9 +93,6 @@ export default {
 
   },
   watch: {
-    bgClass(newClass, oldClass) {
-      console.log("%%%%%%%%%%%%%%%%%%%%%%%%%%%%", this.isMobile);
-    }
   },
   computed: {
     bgClass() {
