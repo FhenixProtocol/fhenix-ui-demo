@@ -353,8 +353,7 @@ export default {
       try {
         this.info = "Querying balance from contract..."
         if (this.enableEncryption) {
-          balance = await this.getFHETokenBalance(web3Provider);
-          console.log("@@@@@@@@@@", balance);
+          balance = await this.getFHETokenBalance(web3Provider, this.account);
         } else {
           let result = await this.activeContract.balanceOf(this.account);
           balance = parseFloat(result);

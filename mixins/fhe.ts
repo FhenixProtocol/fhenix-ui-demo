@@ -70,8 +70,8 @@ var mixin = {
       return Number(encodedData.data.decrypted);
     },
 
-    async loadSignature(provider: Web3Provider) {
-      const savedData = window.localStorage.getItem('savedData');
+    async loadSignature(provider: Web3Provider, address: string) {
+      const savedData = window.localStorage.getItem(`savedData_${appConfig.CHAIN_ID}_${address}`);
       JSON.stringify(self.FHEKeypair)
       if (savedData) {
         const o = JSON.parse(savedData);
@@ -118,7 +118,7 @@ var mixin = {
         keypair: this.FHEKeypair,
         msgSig
       }
-      window.localStorage.setItem('savedData', JSON.stringify(dataToSave));
+      window.localStorage.setItem(`savedData_${appConfig.CHAIN_ID}_${address}`, JSON.stringify(dataToSave));
       return msgSig;
     },
 
@@ -137,9 +137,9 @@ var mixin = {
       return ethers.BigNumber.from(plaintext).toNumber();
     },
 
-    async getFHETokenBalance(provider: Web3Provider) {
+    async getFHETokenBalance(provider: Web3Provider, address: string) {
       try {
-        let sig = await this.loadSignature(provider);
+        let sig = await this.loadSignature(provider, address);
         let encResult = await this.activeContract.balanceOf(`0x${this.FHEPublicKey}`, sig);
         this.info = "Decrypting balance..."
         
