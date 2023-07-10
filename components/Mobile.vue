@@ -214,7 +214,7 @@ export default {
   padding: var(--qr-padding); 
   border-radius: var(--qr-radius); 
   cursor: pointer;
-  transition: all .4s cubic-bezier(.47,1.64,.41,.8);
+  transition: all .2s cubic-bezier(.47,1.64,.41,.8);
 }
 
 
@@ -228,7 +228,7 @@ export default {
         <div>Account: {{ shortAddress(account) }} 
         <v-btn color="blue" density="compact" icon @click="copyToClipboard(account)" size="small">
           <template v-slot:default>
-            <v-tooltip activator="parent" location="end">Copy</v-tooltip>
+            <v-tooltip activator="parent" location="top">Copy</v-tooltip>
 
           <v-icon size="x-small" icon="mdi-content-copy"></v-icon>
           </template>
@@ -311,15 +311,13 @@ export default {
         
       </template>
       
-      <div v-if="isConnected" style="margin-top: 20px; flex-grow: 1; width: 100%; display: flex; justify-content: center; align-items: center">
-        <div @click="toggleQR" class="qr-container" :style="qrStyle">
-          <qrcode-vue style="width: 100%; height: 100%" :size="500" :value="mmDeepLink" level="H" />
+      <div v-if="isConnected" style="position: absolute; bottom: 30px">
+        <div v-if="isConnected" style="margin-bottom: 20px; flex-grow: 1; width: 100%; display: flex; justify-content: center; align-items: center">
+          <div @click="toggleQR" class="qr-container" :style="qrStyle">
+            <qrcode-vue style="width: 100%; height: 100%" :size="500" :value="mmDeepLink" level="H" />
+          </div>
         </div>
 
-      </div>
-
-
-      <div v-if="isConnected" style="position: absolute; bottom: 30px">
         <v-btn @click="showHistory = true" color="primary" rounded>Show UI Activity</v-btn>      
         <swipe-modal
           v-model="showHistory"
