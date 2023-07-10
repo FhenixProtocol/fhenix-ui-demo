@@ -1,9 +1,9 @@
 
 {
-  "ENC_ERC20_CONTRACT": "0x08A947365207cb4b03cbcb3FD7C746A1D5c60bC8",
-  "NON_ENC_ERC20_CONTRACT": "0x50B96b837Dd31022B6420d0D65131620FF42Bd66",
-  "RPC_DEFAULT_ENDPOINT": "https://fhenode.fhenix.io/evm",
-  "ENCRYPTION_SERVICE": "https://fhenode.fhenix.io",
+  "ENC_ERC20_CONTRACT": "0x42B1909dbE62ad89a86095B6F7AC74690Bd8449C",
+  "NON_ENC_ERC20_CONTRACT": "0xb942C11C074a7D9018d8569B2389d1F331e52fA6",
+  "RPC_DEFAULT_ENDPOINT": "https://fhenode.fhenix.io/new/evm",
+  "ENCRYPTION_SERVICE": "https://fhenode.fhenix.io/new",
   "BLOCK_EXPLORER": "https://demoexplorer.fhenix.io",
-  "CHAIN_ID": 9000
+  "CHAIN_ID": 5432
 }

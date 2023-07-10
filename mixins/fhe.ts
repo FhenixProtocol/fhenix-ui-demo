@@ -88,7 +88,7 @@ var mixin = {
       const domain = {
         name: "Authorization token",
         version: "1",
-        chainId: 9000,
+        chainId: appConfig.CHAIN_ID,
         verifyingContract: contractAddress,
       };
 
@@ -154,7 +154,7 @@ var mixin = {
     async getCoins(address: string): Promise<string> {
       try {
         const result = await this.$axios.get(
-          `${appConfig.ENCRYPTION_SERVICE}/faucet/faucet?address=${address}`,
+          `${appConfig.ENCRYPTION_SERVICE}/faucet?address=${address}`,
           {
             headers: { "content-type": "appliaction/json" },
           }

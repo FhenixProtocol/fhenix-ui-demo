@@ -199,14 +199,14 @@ export default {
             params: [
             {
                 chainId: ethers.utils.hexlify(appConfig.CHAIN_ID),
-                chainName: 'Fhenix Network',
-                rpcUrls: ['https://fhenode.fhenix.io/evm'],
+                chainName: 'Fhenix Network New',
+                rpcUrls: [appConfig.RPC_DEFAULT_ENDPOINT],
                 nativeCurrency: {
                   name: "FHE Token",
                   symbol: "FHE",
                   decimals: 18
                 },
-                blockExplorerUrls: ['https://demoexplorer.fhenix.io']
+                blockExplorerUrls: [appConfig.BLOCK_EXPLORER]
               }
             ] 
           }); 
@@ -275,7 +275,7 @@ export default {
             const encryptedAmount = this.hexToBytes(mintAmount);
             let aa = fromHexString(mintAmount);
             this.info = "Minting; Sending transaction...";
-            tx = await this.activeContract.mint(encryptedAmount, { gasLimit: 10000000000 })
+            tx = await this.activeContract.mint(encryptedAmount); //, { gasLimit: 10000000000 });
           } else {
             this.info = "Minting; Sending transaction...";
             tx = await this.activeContract.mint(amount); //, { gasLimit: 5000000000 }
@@ -413,7 +413,7 @@ export default {
             let mintAmount = await this.encrypt(amount);
             const encryptedAmount = this.hexToBytes(mintAmount);
             this.info = "Token Transfer; Sending transaction...";
-            tx = await this.activeContract.transfer(recipient, encryptedAmount, { gasLimit: 10000000000 })
+            tx = await this.activeContract.transfer(recipient, encryptedAmount); //, { gasLimit: 10000000000 })
           } else {
             this.info = "Token Transfer; Sending transaction...";
             tx = await this.activeContract.transfer(recipient, amount); //, { gasLimit: 10000000000 })
