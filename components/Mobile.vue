@@ -18,7 +18,14 @@ export default {
   },  
   data() {
     return {
-      showHistory: false
+      showHistory: false,
+      qrInfo: {
+        expanded: false,
+        size: "50px",
+        radius: "5px",
+        padding: "5px",
+        componentSize: 50
+      }
     }
   },
   computed: {
@@ -37,8 +44,30 @@ export default {
       }
       return { "--info-height" : infoHeight, "--bg-color": bgColor };
     },
+    qrStyle() {
+      return { "--qr-size": this.qrInfo.size, "--qr-radius": this.qrInfo.radius, "--qr-padding": this.qrInfo.padding };
+    }
   },
   methods: {
+    toggleQR() {
+      if (this.qrInfo.expanded) {
+        this.qrInfo = {
+          expanded: false,
+          size: "50px",
+          radius: "5px",
+          padding: "5px",
+          componentSize: 50
+        };
+      } else {
+        this.qrInfo = {
+          expanded: true,
+          size: "150px",
+          radius: "10px",
+          padding: "10px",
+          componentSize: 300
+        };
+      }
+    },
     openMetaMask() {
       window.location.href = this.mmDeepLink;
     }
@@ -54,6 +83,7 @@ export default {
     align-items: center;
     padding: 10px;
     gap: 10px;
+    /* height: 100vh; */
   }
 
   .logo {
@@ -176,6 +206,18 @@ export default {
   }
 }
 
+.qr-container {
+  /* position: relative;  */
+  height: var(--qr-size); 
+  width: var(--qr-size); 
+  background-color: white; 
+  padding: var(--qr-padding); 
+  border-radius: var(--qr-radius); 
+  cursor: pointer;
+  transition: all .4s cubic-bezier(.47,1.64,.41,.8);
+}
+
+
 </style>
 
 <template>
@@ -269,6 +311,14 @@ export default {
         
       </template>
       
+      <div v-if="isConnected" style="margin-top: 20px; flex-grow: 1; width: 100%; display: flex; justify-content: center; align-items: center">
+        <div @click="toggleQR" class="qr-container" :style="qrStyle">
+          <qrcode-vue style="width: 100%; height: 100%" :size="500" :value="mmDeepLink" level="H" />
+        </div>
+
+      </div>
+
+
       <div v-if="isConnected" style="position: absolute; bottom: 30px">
         <v-btn @click="showHistory = true" color="primary" rounded>Show UI Activity</v-btn>      
         <swipe-modal
