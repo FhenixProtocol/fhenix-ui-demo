@@ -25,7 +25,7 @@
     "axios": "^1.4.0",
     "ethers": "^5.7",
     "ethers-eip712": "^0.2.0",
-    "fhevmjs": "^0.0.3",
+    "fhevmjs": "^0.1.1",
     "install": "^0.13.0",
     "libsodium-wrappers": "^0.7.11",
     "lottie-vuejs": "^0.4.0",

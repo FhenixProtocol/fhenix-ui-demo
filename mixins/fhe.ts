@@ -1,6 +1,6 @@
 import appConfig from "../config/appConfig.json";
 import { ethers, Web3Provider } from "ethers";
-import _sodium from "libsodium-wrappers";
+import { initFhevm, createInstance } from "fhevmjs";
 
 const fromHexString = (hexString: string): Uint8Array => {
   const arr = hexString.replace(/^(0x)/, '').match(/.{1,2}/g);
@@ -10,21 +10,11 @@ const fromHexString = (hexString: string): Uint8Array => {
 
 var mixin = {
   created() {
-    var self = this;
-    const load = async () => {
-      await _sodium.ready;
-      self.sodium = _sodium;
-      self.FHEKeypair = self.sodium.crypto_box_keypair("hex");
-      self.FHEPublicKey = self.FHEKeypair.publicKey;
-    }
-    load();
+
   },
   data() {
     return {
       usingFaucet: false,
-      sodium: null,
-      FHEKeypair: null,
-      FHEPublicKey: null
     };
   },
   methods: {
@@ -70,80 +60,66 @@ var mixin = {
       return Number(encodedData.data.decrypted);
     },
 
+    async createFhevmInstance(provider: Web3Provider, savedData: any) {
+      await initFhevm();
+      const publicKey = await provider.call({
+        from: null,
+        to: "0x0000000000000000000000000000000000000044",
+      });
+
+      return createInstance({ chainId: appConfig.CHAIN_ID, publicKey , keypairs: (savedData) ? savedData.keypairs : undefined });
+    }, 
+
     async loadSignature(provider: Web3Provider, address: string) {
-      const savedData = window.localStorage.getItem(`savedData_${appConfig.CHAIN_ID}_${address}`);
-      JSON.stringify(self.FHEKeypair)
+      const savedData = window.localStorage.getItem(`savedFHEVMData_${appConfig.CHAIN_ID}_${address}`);
+      var o = null;
       if (savedData) {
-        const o = JSON.parse(savedData);
-        this.FHEKeypair = o.keypair;
-        this.FHEPublicKey = o.keypair.publicKey
-        return o.msgSig;
+        o = JSON.parse(savedData);
       }
 
-      console.log("Generating keys...");
-      const contractAddress = appConfig.ENC_ERC20_CONTRACT;
+      if (o) {
+        if (!this.instance) {
+          this.instance = await this.createFhevmInstance(provider, o);
+        }
+        return { msgSig: o.msgSig, publicKey: o.publicKey };
+      }
+      
+      if (!this.instance) {
+        this.instance = await this.createFhevmInstance(provider, null);
+      }
 
       const signer = await provider.getSigner();
-
-      const domain = {
-        name: "Authorization token",
-        version: "1",
-        chainId: appConfig.CHAIN_ID,
-        verifyingContract: contractAddress,
-      };
-
-      const typedData = {
-        types: {
-          Reencrypt: [
-            {
-              name: "publicKey",
-              type: "bytes32",
-            },
-          ],
-        },
-        domain: domain,
-        primaryType: "Reencrypt",
-        message: {
-          publicKey: `0x${this.FHEPublicKey}`,
-        },
-      };
+      const generatedToken = this.instance.generateToken({
+        verifyingContract: appConfig.ENC_ERC20_CONTRACT,
+      });
+      
 
       const msgSig = await signer._signTypedData(
-        typedData.domain,
-        typedData.types,
-        typedData.message
+        generatedToken.token.domain,
+        { Reencrypt: generatedToken.token.types.Reencrypt },
+        generatedToken.token.message
       );
 
+      this.instance.setTokenSignature(appConfig.ENC_ERC20_CONTRACT, msgSig);
+      const keypairs = this.instance.serializeKeypairs();
       const dataToSave = {
-        keypair: this.FHEKeypair,
+        keypairs,
+        publicKey: keypairs[appConfig.ENC_ERC20_CONTRACT].publicKey,
         msgSig
       }
-      window.localStorage.setItem(`savedData_${appConfig.CHAIN_ID}_${address}`, JSON.stringify(dataToSave));
-      return msgSig;
-    },
 
-    async decrypt(amount: string) {
-      const plaintext = this.sodium.crypto_box_seal_open(
-        fromHexString(amount),
-        fromHexString(this.FHEKeypair.publicKey),
-        fromHexString(this.FHEKeypair.privateKey)
-      );
-
-      console.log("enc balance:", plaintext);
-
-      if (plaintext === false) {
-        return 0;
-      }
-      return ethers.BigNumber.from(plaintext).toNumber();
+      console.log(dataToSave);
+      window.localStorage.setItem(`savedFHEVMData_${appConfig.CHAIN_ID}_${address}`, JSON.stringify(dataToSave));
+      return { msgSig, publicKey: keypairs[appConfig.ENC_ERC20_CONTRACT].publicKey };
     },
 
     async getFHETokenBalance(provider: Web3Provider, address: string) {
       try {
         let sig = await this.loadSignature(provider, address);
-        let encResult = await this.activeContract.balanceOf(`0x${this.FHEPublicKey}`, sig);
-        this.info = "Decrypting balance..."
-        
-        let balance = await this.decrypt(encResult);
+        this.instance.setTokenSignature(appConfig.ENC_ERC20_CONTRACT, sig.msgSig);
+
+        const encryptedBalance = await this.activeContract.balanceOf(`0x${sig.publicKey}`, sig.msgSig);
+        const balance = this.instance.decrypt(appConfig.ENC_ERC20_CONTRACT, encryptedBalance);
         return balance;
       } catch (err) {
         console.log(err);

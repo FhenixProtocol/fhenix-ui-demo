@@ -5,6 +5,7 @@ import FHEMixin from '../mixins/fhe';
 import mainMixin from '../mixins/mainMixin';
 import { useTheme } from 'vuetify'
 
+
 export default {
   mixins: [mainMixin, FHEMixin],
   setup () {
@@ -15,6 +16,9 @@ export default {
         return theme.global.name.value = theme.global.name.value === 'nonEncryptedTheme' ? 'encryptedTheme' : 'nonEncryptedTheme';
       } 
     }
+  },
+  created() {
+
   },
   data() {
     return {
@@ -102,20 +106,12 @@ export default {
     </div>
     <div class="content-panel">
       <div v-if="!isConnected" class="content-blocker">
-        
-        <!-- <div style="margin-left: 30px;  padding: 20px; background-color: rgba(255, 255, 255, 0.171); max-width: 400px; border-radius: 15px;">
-          <div style="text-shadow: 1px 1px 2px black; font-size: 28px; font-weight: bold; color: #ffe600;">Please connect your wallet</div>
-        </div> -->
-       
       </div>
-      <!-- <div style="display: flex; flex-direction: column">
-      </div> -->
       <div>
         <div class="action-panel" :class="enableEncryption ? 'encrypted' : 'non-encrypted'">
           
           <div v-if="showEncryptionInfo" style="position: absolute; top: 55px; right: -50px; z-index: 20">
             <div class="triangle-tooltip">
-            <!-- <p>Switch between encrypted and not encrypted contract</p> -->
             <div> 
               <table>
                 <tr> 

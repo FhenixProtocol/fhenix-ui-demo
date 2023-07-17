@@ -4,8 +4,8 @@ import FHEMixin from '../mixins/fhe';
 import globalMixin from '../mixins/globalMixin';
 
 //import Web3 from 'web3'
-import { ethers } from "ethers";
-
+import { ethers, BrowserProvider  } from "ethers";
+import { initFhevm, createInstance } from "fhevmjs";
 
 import ABIENC from '../assets/erc20enc.json';
 import ABI from '../assets/erc20.json';
@@ -71,6 +71,7 @@ export default {
       transferring: false,
       explorer: appConfig.BLOCK_EXPLORER,
       showEncryptionInfo: true,
+      instance: null, 
       amountRules: [
         value => {
           if (value) return true
@@ -270,15 +271,12 @@ export default {
           if (this.enableEncryption) {
             this.info = "Minting; Encrypting amount...";
             console.log("Encrypting...");
-            let mintAmount = await this.encrypt(amount);
-            console.log(mintAmount);
-            const encryptedAmount = this.hexToBytes(mintAmount);
-            let aa = fromHexString(mintAmount);
+            let mintAmount = this.instance.encrypt32(amount);
             this.info = "Minting; Sending transaction...";
-            tx = await this.activeContract.mint(encryptedAmount); //, { gasLimit: 10000000000 });
+            tx = await this.activeContract.mint(mintAmount);
           } else {
             this.info = "Minting; Sending transaction...";
-            tx = await this.activeContract.mint(amount); //, { gasLimit: 5000000000 }
+            tx = await this.activeContract.mint(amount);
           }
 
           if (tx !== null) {
@@ -394,8 +392,8 @@ export default {
     },
 
     async sendTokens() {
-      let recipient = this.$refs.recipient.value;
-      let amount = this.$refs.amount.value;
+      let recipient = this.$refs.recipient.value.trim();
+      let amount = Number(this.$refs.amount.value);
       
       if (amount <= 0 || recipient === "") {
         return;
@@ -409,13 +407,16 @@ export default {
           if (this.enableEncryption) {
             this.info = "Token Transfer; Encrypting amount...";
             console.log("Encrypting amount...");
-            let mintAmount = await this.encrypt(amount);
-            const encryptedAmount = this.hexToBytes(mintAmount);
+            console.log(typeof amount);
+            console.log(amount);
+            let sendAmount = this.instance.encrypt32(amount);
+            console.log(sendAmount);
             this.info = "Token Transfer; Sending transaction...";
-            tx = await this.activeContract.transfer(recipient, encryptedAmount); //, { gasLimit: 10000000000 })
+            //tx = await this.activeContract.transfer(recipient, sendAmount); 
+            tx = await this.activeContract['transfer(address,bytes)'](recipient, sendAmount);
           } else {
             this.info = "Token Transfer; Sending transaction...";
-            tx = await this.activeContract.transfer(recipient, amount); //, { gasLimit: 10000000000 })
+            tx = await this.activeContract.transfer(recipient, amount);
           }
           this.info = "Token Transfer; Waiting for confirmation...";
           if (tx) {
@@ -444,6 +445,7 @@ export default {
           }
           this.getWalletBalance();    
         } catch (err) {
+          console.log(err);
           this.transferring = false;
           this.info = "Error: Transfer failed!";
         }
