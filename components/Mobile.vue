@@ -222,7 +222,7 @@ export default {
 
 <template>
   <div class="main">
-    <img class="logo" src="~/assets/fhenix_logo.svg" />
+    <img class="logo" src="~/assets/new_logo.png" />
     <template v-if="hasMetaMask">
       <template  v-if="account != ''">
         <div>Account: {{ shortAddress(account) }} 

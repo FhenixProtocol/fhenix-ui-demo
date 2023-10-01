@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@metamask/onboarding": "^1.0.1",
+    "@metamask/providers": "^11.1.1",
     "@metamask/sdk": "^0.3.0",
     "@nuxt/ui": "^0.4.1",
     "@nuxtjs/axios": "^5.13.6",

@@ -76,7 +76,7 @@ export default {
   <div class="main">
     <div class="settings-panel">
       <div id="logo" style="position: absolute; padding: 10px; left:3px; height: 100px; width: 320px">
-        <img class="logo" src="~/assets/fhenix_logo.svg" />
+        <img class="logo" src="~/assets/new_logo.png" />
       </div>
       
       <div style="height: 120px;"></div> <!-- spacer -->
